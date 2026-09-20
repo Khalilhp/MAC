@@ -1,4 +1,4 @@
-```html
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -428,5 +428,414 @@ var clearButton =
    FORMAT MAC
 ============================ */
 
-function formatOne(value)
+function formatOne(value){
+
+  var clean =
+    value
+      .replace(/[^0-9a-f]/gi,"")
+      .toUpperCase();
+
+  if(clean.length !== 12){
+    return null;
+  }
+
+  return clean.substring(0,4)
+    + "-"
+    + clean.substring(4,8)
+    + "-"
+    + clean.substring(8,12);
+}
+
+
+/* ============================
+   FORMAT ALL
+============================ */
+
+function formatAll(){
+
+  var lines =
+    macInput.value
+      .split(/\r?\n/)
+      .filter(function(x){
+        return x.trim() !== "";
+      });
+
+
+  if(lines.length === 0){
+
+    result.textContent =
+      "Your formatted MAC address will appear here.";
+
+    return;
+  }
+
+
+  var formatted =
+    lines.map(function(line){
+
+      var mac =
+        formatOne(line);
+
+      if(mac){
+        return mac;
+      }
+
+      return line + " [Invalid MAC]";
+
+    });
+
+
+  result.textContent =
+    formatted.join("\n");
+}
+
+
+/* ============================
+   FIND MACS
+============================ */
+
+function findMACs(text){
+
+  var regex =
+    /\b[0-9a-f]{2}(?:[:\-.\s][0-9a-f]{2}){5}\b|\b[0-9a-f]{12}\b/gi;
+
+  var matches =
+    text.match(regex) || [];
+
+  var found = [];
+
+
+  matches.forEach(function(item){
+
+    var mac =
+      formatOne(item);
+
+    if(
+      mac &&
+      found.indexOf(mac) === -1
+    ){
+
+      found.push(mac);
+    }
+
+  });
+
+
+  return found;
+}
+
+
+/* ============================
+   SCAN IMAGE
+============================ */
+
+function scanImage(file){
+
+  if(!file){
+    return;
+  }
+
+
+  if(!file.type ||
+     file.type.indexOf("image/") !== 0){
+
+    status.textContent =
+      "⚠ Please select an image.";
+
+    return;
+  }
+
+
+  var reader =
+    new FileReader();
+
+
+  reader.onload =
+    function(event){
+
+      preview.src =
+        event.target.result;
+
+      preview.style.display =
+        "block";
+
+
+      status.textContent =
+        "🔍 Scanning image...";
+
+
+      if(
+        typeof Tesseract ===
+        "undefined"
+      ){
+
+        status.textContent =
+          "⚠ OCR library is still loading. Please try again in a few seconds.";
+
+        return;
+      }
+
+
+      Tesseract.recognize(
+        event.target.result,
+        "eng",
+        {
+
+          logger:function(info){
+
+            if(
+              info.status ===
+              "recognizing text"
+            ){
+
+              var percent =
+                Math.round(
+                  info.progress * 100
+                );
+
+              status.textContent =
+                "🔍 Scanning image... "
+                + percent
+                + "%";
+            }
+
+          }
+
+        }
+
+      ).then(function(response){
+
+        var found =
+          findMACs(
+            response.data.text
+          );
+
+
+        if(found.length > 0){
+
+          macInput.value =
+            found.join("\n");
+
+          result.textContent =
+            found.join("\n");
+
+          status.textContent =
+            "✓ MAC address detected successfully.";
+
+        }
+        else{
+
+          result.textContent =
+            "No MAC address detected.";
+
+          status.textContent =
+            "⚠ No MAC address found. Try a clearer photo.";
+
+        }
+
+      }).catch(function(error){
+
+        console.log(error);
+
+        status.textContent =
+          "⚠ OCR failed. Please check your internet connection.";
+
+      });
+
+    };
+
+
+  reader.onerror =
+    function(){
+
+      status.textContent =
+        "⚠ Unable to read the selected image.";
+
+    };
+
+
+  reader.readAsDataURL(file);
+}
+
+
+/* ============================
+   FILE EVENTS
+============================ */
+
+computerFile.addEventListener(
+  "change",
+  function(){
+
+    if(this.files &&
+       this.files.length){
+
+      scanImage(this.files[0]);
+    }
+
+  }
+);
+
+
+galleryFile.addEventListener(
+  "change",
+  function(){
+
+    if(this.files &&
+       this.files.length){
+
+      scanImage(this.files[0]);
+    }
+
+  }
+);
+
+
+cameraFile.addEventListener(
+  "change",
+  function(){
+
+    if(this.files &&
+       this.files.length){
+
+      scanImage(this.files[0]);
+    }
+
+  }
+);
+
+
+/* ============================
+   BUTTONS
+============================ */
+
+formatButton.addEventListener(
+  "click",
+  formatAll
+);
+
+
+copyButton.addEventListener(
+  "click",
+  function(){
+
+    var text =
+      result.textContent.trim();
+
+
+    if(
+      !text ||
+      text.indexOf(
+        "Your formatted"
+      ) === 0
+    ){
+
+      alert(
+        "Please format or scan a MAC address first."
+      );
+
+      return;
+    }
+
+
+    if(
+      navigator.clipboard &&
+      navigator.clipboard.writeText
+    ){
+
+      navigator.clipboard.writeText(
+        text
+      ).then(function(){
+
+        alert("✓ Result copied.");
+
+      }).catch(function(){
+
+        fallbackCopy(text);
+
+      });
+
+    }
+    else{
+
+      fallbackCopy(text);
+
+    }
+
+  }
+);
+
+
+function fallbackCopy(text){
+
+  var area =
+    document.createElement("textarea");
+
+  area.value =
+    text;
+
+  area.style.position =
+    "fixed";
+
+  area.style.left =
+    "-9999px";
+
+  document.body.appendChild(area);
+
+  area.focus();
+  area.select();
+
+  document.execCommand("copy");
+
+  document.body.removeChild(area);
+
+  alert("✓ Result copied.");
+
+}
+
+
+/* ============================
+   CLEAR
+============================ */
+
+clearButton.addEventListener(
+  "click",
+  function(){
+
+    macInput.value = "";
+
+    result.textContent =
+      "Your formatted MAC address will appear here.";
+
+    computerFile.value = "";
+    galleryFile.value = "";
+    cameraFile.value = "";
+
+    preview.src = "";
+    preview.style.display = "none";
+
+    status.textContent =
+      "Choose an image to scan.";
+
+  }
+);
+
+
+/* ============================
+   INITIAL
+============================ */
+
+formatAll();
+
+})();
+
+</script>
+
+
+<!-- OCR LIBRARY -->
+<script
+src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js">
+</script>
+
+</body>
+</html>
 ```
