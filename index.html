@@ -211,6 +211,24 @@ button,
     font-size:16px;
   }
 }
+
+/* QR / DEVICE REGISTRATION */
+.qr-card{display:none}
+.qr-wrap{text-align:center}
+.qr-box{display:inline-flex;align-items:center;justify-content:center;background:#fff;padding:14px;border:1px solid #e5e7eb;border-radius:16px;min-height:240px}
+.qr-box img{width:210px;height:210px;display:block}
+.qr-help{margin-top:12px;color:#697386;font-size:13px;line-height:1.55}
+.mac-entry{margin-top:14px}
+.mac-entry input{width:100%;height:50px;border:1px solid #ddd;border-radius:12px;padding:12px 14px;font:17px Consolas,monospace;text-transform:uppercase;outline:none}
+.mac-entry input:focus{border-color:#6366f1;box-shadow:0 0 0 3px #6366f122}
+.register-result{margin-top:12px;background:#111827;color:#fff;padding:14px;border-radius:12px;font:20px Consolas,monospace;text-align:center;display:none}
+.qr-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.badge{display:inline-block;padding:5px 9px;border-radius:999px;background:#eef2ff;color:#4338ca;font-size:12px;font-weight:700;margin-bottom:10px}
+@media(max-width:550px){
+  .qr-actions{grid-template-columns:1fr}
+  .qr-box img{width:190px;height:190px}
+}
+
 </style>
 </head>
 
@@ -336,6 +354,61 @@ button,
 
 </div>
 
+
+
+<!-- QR / DEVICE REGISTRATION -->
+<div class="card qr-card" id="qrCard">
+  <div class="title">📱 Phone MAC Registration</div>
+
+  <div id="qrGenerator">
+    <div class="qr-wrap">
+      <span class="badge">SCAN WITH PHONE</span>
+      <div class="qr-box">
+        <img id="qrImage" alt="QR Code">
+      </div>
+      <div class="qr-help">
+        Scan this QR code with the phone camera.<br>
+        The phone will open the MAC registration page.
+      </div>
+    </div>
+
+    <div class="qr-actions">
+      <button type="button" class="primary" id="refreshQrButton">🔄 Refresh QR</button>
+      <button type="button" class="secondary" id="openRegisterButton">📱 Open Registration</button>
+    </div>
+  </div>
+
+  <div id="registrationPanel" style="display:none">
+    <div class="qr-help" style="margin-top:0">
+      Enter the phone's <b>Permanent / Device Wi-Fi MAC Address</b>.<br>
+      Example: <b>4C:23:38:42:01:33</b>
+    </div>
+
+    <div class="mac-entry">
+      <input id="deviceMacInput" type="text"
+        placeholder="XX:XX:XX:XX:XX:XX"
+        inputmode="text"
+        autocomplete="off"
+        maxlength="17">
+    </div>
+
+    <button type="button" class="primary" id="registerMacButton">
+      ✓ Format & Register MAC
+    </button>
+
+    <div id="registerResult" class="register-result"></div>
+
+
+    <button type="button" class="secondary" id="backToToolButton">
+      ← Back to MAC Formatter
+    </button>
+
+    <div class="qr-help">
+      <b>Android:</b> Settings → About phone → Status / Wi-Fi MAC Address<br>
+      <b>iPhone:</b> Settings → General → About → Wi-Fi Address
+    </div>
+  </div>
+</div>
 
 <!-- RESULT -->
 
@@ -826,6 +899,139 @@ clearButton.addEventListener(
 
 formatAll();
 
+
+  /* ============================
+     QR / DEVICE REGISTRATION
+  ============================ */
+
+  var qrCard = document.getElementById("qrCard");
+  var qrImage = document.getElementById("qrImage");
+  var refreshQrButton = document.getElementById("refreshQrButton");
+  var openRegisterButton = document.getElementById("openRegisterButton");
+  var qrGenerator = document.getElementById("qrGenerator");
+  var registrationPanel = document.getElementById("registrationPanel");
+  var deviceMacInput = document.getElementById("deviceMacInput");
+  var registerMacButton = document.getElementById("registerMacButton");
+  var registerResult = document.getElementById("registerResult");
+
+  function registrationUrl(){
+    var base = window.location.href.split("#")[0].split("?")[0];
+    return base + "?register=1";
+  }
+
+  function makeQr(){
+    if(!qrImage) return;
+
+    var target = registrationUrl();
+
+    /* Google Chart QR endpoint keeps this file single-page.
+       If the network blocks it, the registration URL can still be opened manually. */
+    qrImage.src =
+      "https://quickchart.io/qr?size=300&margin=2&text="
+      + encodeURIComponent(target);
+
+    qrImage.onerror = function(){
+      qrImage.alt = "QR service unavailable. Open the registration URL manually.";
+    };
+  }
+
+  function showRegistrationMode(){
+    qrCard.style.display = "block";
+    qrGenerator.style.display = "none";
+    registrationPanel.style.display = "block";
+
+    if(deviceMacInput){
+      setTimeout(function(){
+        deviceMacInput.focus();
+      },100);
+    }
+  }
+
+  function showQrMode(){
+    qrCard.style.display = "block";
+    qrGenerator.style.display = "block";
+    registrationPanel.style.display = "none";
+    makeQr();
+  }
+
+  function formatDeviceMac(value){
+    var clean = (value || "")
+      .replace(/[^0-9a-f]/gi,"")
+      .toUpperCase();
+
+    if(clean.length !== 12){
+      return null;
+    }
+
+    return clean.substring(0,4) + "-"
+      + clean.substring(4,8) + "-"
+      + clean.substring(8,12);
+  }
+
+  if(registerMacButton){
+    registerMacButton.addEventListener("click", function(){
+      var formatted = formatDeviceMac(deviceMacInput.value);
+
+      if(!formatted){
+        registerResult.style.display = "block";
+        registerResult.textContent = "⚠ Invalid MAC Address";
+        return;
+      }
+
+      deviceMacInput.value = formatted;
+      registerResult.style.display = "block";
+      registerResult.textContent = formatted;
+
+      /* Put the registered MAC into the main formatter as well */
+      macInput.value = formatted;
+      result.textContent = formatted;
+    });
+  }
+
+  if(deviceMacInput){
+    deviceMacInput.addEventListener("input", function(){
+      var raw = this.value.replace(/[^0-9a-f]/gi,"").toUpperCase();
+
+      if(raw.length === 12){
+        this.value = raw.substring(0,4) + "-"
+          + raw.substring(4,8) + "-"
+          + raw.substring(8,12);
+      }
+    });
+
+    deviceMacInput.addEventListener("keydown", function(e){
+      if(e.key === "Enter"){
+        registerMacButton.click();
+      }
+    });
+  }
+
+  if(refreshQrButton){
+    refreshQrButton.addEventListener("click", makeQr);
+  }
+
+  if(openRegisterButton){
+    openRegisterButton.addEventListener("click", function(){
+      window.location.href = registrationUrl();
+    });
+  }
+
+
+  var backToToolButton = document.getElementById("backToToolButton");
+  if(backToToolButton){
+    backToToolButton.addEventListener("click", function(){
+      window.location.href = window.location.href.split("?")[0];
+    });
+  }
+
+  /* QR mode is shown on the desktop/admin page.
+     Registration mode is shown when the phone scans the QR. */
+  if(window.location.search.indexOf("register=1") !== -1){
+    showRegistrationMode();
+  }else{
+    showQrMode();
+  }
+
 })();
 
 </script>
@@ -838,4 +1044,5 @@ src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js">
 
 </body>
 </html>
+
 ```
