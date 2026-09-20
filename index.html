@@ -1,13 +1,19 @@
-```html
+
 <!doctype html>
 <html lang="en">
+
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+<meta name="theme-color" content="#4f46e5">
 
 <title>MAC Address Formatter</title>
 
 <style>
+
 *{
   box-sizing:border-box;
   -webkit-tap-highlight-color:transparent;
@@ -85,7 +91,8 @@ textarea:focus{
   box-shadow:0 0 0 3px #6366f122;
 }
 
-button{
+button,
+.file-button{
   width:100%;
   border:0;
   border-radius:12px;
@@ -96,6 +103,11 @@ button{
   cursor:pointer;
   min-height:48px;
   touch-action:manipulation;
+  text-align:center;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-decoration:none;
 }
 
 .primary{
@@ -123,25 +135,29 @@ button{
   color:#697386;
 }
 
-.file input{
+.file-main-input{
   width:100%;
   margin-top:14px;
   font-size:14px;
 }
 
-.camera-buttons{
+.mobile-buttons{
   display:grid;
   grid-template-columns:1fr 1fr;
   gap:10px;
   margin-top:12px;
 }
 
-.camera-buttons button{
+.mobile-buttons label{
   margin-top:0;
 }
 
-.hidden-input{
-  display:none !important;
+.mobile-input{
+  position:absolute;
+  width:1px;
+  height:1px;
+  opacity:0;
+  pointer-events:none;
 }
 
 .preview{
@@ -188,458 +204,5 @@ button{
 @media(max-width:550px){
 
   body{
-    padding:14px 10px;
-  }
-
-  .card{
-    padding:16px;
-    border-radius:17px;
-  }
-
-  h1{
-    font-size:23px;
-  }
-
-  .logo{
-    width:58px;
-    height:58px;
-    font-size:27px;
-  }
-
-  .camera-buttons{
-    grid-template-columns:1fr;
-  }
-
-  .grid{
-    grid-template-columns:1fr;
-  }
-
-  button{
-    font-size:16px;
-  }
-
-  textarea{
-    font-size:16px;
-  }
-}
-
-@media(min-width:551px){
-  .mobile-only{
-    display:none;
-  }
-}
-</style>
-</head>
-
-<body>
-
-<main>
-
-<div class="head">
-  <div class="logo">⌁</div>
-  <h1>MAC Address Formatter</h1>
-  <div class="sub">Format, scan and copy MAC addresses</div>
-</div>
-
-
-<!-- MANUAL FORMATTER -->
-<div class="card">
-
-  <div class="title">⌨ Manual Formatter</div>
-
-  <textarea id="macInput"
-    placeholder="Enter MAC addresses, one per line...">68-3E-26-8D-BB-F7
-4C:23:38:42:01:33</textarea>
-
-  <button class="primary" id="formatBtn">
-    ⚡ Format MAC Addresses
-  </button>
-
-</div>
-
-
-<!-- PHOTO SCANNER -->
-<div class="card">
-
-  <div class="title">📷 Get MAC Address from Photo</div>
-
-  <div class="file">
-
-    <b>📁 Select an Image</b>
-
-    <small>
-      Choose a photo from your computer, gallery or camera.
-    </small>
-
-    <!-- Desktop / general file picker -->
-    <input
-      id="photo"
-      type="file"
-      accept="image/*"
-    >
-
-    <!-- Mobile buttons -->
-    <div class="camera-buttons">
-
-      <button
-        class="secondary"
-        type="button"
-        id="galleryBtn">
-        🖼️ Gallery
-      </button>
-
-      <button
-        class="secondary"
-        type="button"
-        id="cameraBtn">
-        📷 Take Photo
-      </button>
-
-    </div>
-
-    <!-- Mobile gallery input -->
-    <input
-      id="galleryInput"
-      class="hidden-input"
-      type="file"
-      accept="image/*"
-    >
-
-    <!-- Mobile camera input -->
-    <input
-      id="cameraInput"
-      class="hidden-input"
-      type="file"
-      accept="image/*"
-      capture="environment"
-    >
-
-    <img
-      id="preview"
-      class="preview"
-      alt="Selected image preview"
-    >
-
-  </div>
-
-  <div id="status" class="status">
-    Choose an image to scan.
-  </div>
-
-</div>
-
-
-<!-- RESULT -->
-<div class="card">
-
-  <div class="title">✓ Formatted Result</div>
-
-  <div id="output" class="out">
-    Your formatted MAC address will appear here.
-  </div>
-
-  <div class="grid">
-
-    <button
-      class="primary"
-      id="copyBtn">
-      📋 Copy Result
-    </button>
-
-    <button
-      class="secondary"
-      id="clearBtn">
-      ↺ Clear
-    </button>
-
-  </div>
-
-</div>
-
-</main>
-
-
-<!-- TESSERACT OCR -->
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-
-<script>
-
-const macInput = document.getElementById("macInput");
-const output = document.getElementById("output");
-
-const photo = document.getElementById("photo");
-const galleryInput = document.getElementById("galleryInput");
-const cameraInput = document.getElementById("cameraInput");
-
-const galleryBtn = document.getElementById("galleryBtn");
-const cameraBtn = document.getElementById("cameraBtn");
-
-const preview = document.getElementById("preview");
-const statusBox = document.getElementById("status");
-
-const formatBtn = document.getElementById("formatBtn");
-const copyBtn = document.getElementById("copyBtn");
-const clearBtn = document.getElementById("clearBtn");
-
-
-/* --------------------------------
-   FORMAT MAC ADDRESS
--------------------------------- */
-
-function fmt(value){
-
-  let x = value
-    .replace(/[^0-9a-f]/gi,'')
-    .toUpperCase();
-
-  if(x.length !== 12){
-    return null;
-  }
-
-  return (
-    x.slice(0,4) + "-" +
-    x.slice(4,8) + "-" +
-    x.slice(8)
-  );
-}
-
-
-/* --------------------------------
-   FORMAT MANUAL INPUT
--------------------------------- */
-
-function formatMAC(){
-
-  const lines = macInput.value
-    .split(/\r?\n/)
-    .filter(x => x.trim());
-
-  if(!lines.length){
-
-    output.textContent =
-      "Your formatted MAC address will appear here.";
-
-    return;
-  }
-
-  output.textContent = lines
-    .map(x => {
-
-      const result = fmt(x);
-
-      return result || x + " [Invalid MAC]";
-
-    })
-    .join("\n");
-}
-
-
-/* --------------------------------
-   FIND MAC ADDRESSES FROM OCR
--------------------------------- */
-
-function findMACs(text){
-
-  const results = [];
-
-  const regex =
-    /\b[0-9a-f]{2}(?:[:\-.\s][0-9a-f]{2}){5}\b|\b[0-9a-f]{12}\b/gi;
-
-  const matches = text.match(regex) || [];
-
-  for(const item of matches){
-
-    const formatted = fmt(item);
-
-    if(
-      formatted &&
-      !results.includes(formatted)
-    ){
-      results.push(formatted);
-    }
-
-  }
-
-  return results;
-}
-
-
-/* --------------------------------
-   PROCESS IMAGE
--------------------------------- */
-
-async function processImage(file){
-
-  if(!file){
-    return;
-  }
-
-  if(!file.type.startsWith("image/")){
-
-    statusBox.textContent =
-      "⚠ Please select a valid image.";
-
-    return;
-  }
-
-
-  /* Show preview */
-
-  const reader = new FileReader();
-
-  reader.onload = async function(event){
-
-    preview.src = event.target.result;
-    preview.style.display = "block";
-
-    statusBox.textContent =
-      "🔍 Preparing image for scanning...";
-
-
-    try{
-
-      if(typeof Tesseract === "undefined"){
-
-        throw new Error(
-          "OCR library could not be loaded."
-        );
-
-      }
-
-
-      statusBox.textContent =
-        "🔍 Scanning image...";
-
-
-      const result =
-        await Tesseract.recognize(
-          event.target.result,
-          "eng",
-          {
-            logger: function(message){
-
-              if(
-                message.status ===
-                "recognizing text"
-              ){
-
-                const progress =
-                  Math.round(
-                    message.progress * 100
-                  );
-
-                statusBox.textContent =
-                  "🔍 Scanning image... " +
-                  progress +
-                  "%";
-
-              }
-
-            }
-          }
-        );
-
-
-      const macs =
-        findMACs(result.data.text);
-
-
-      if(macs.length){
-
-        macInput.value =
-          macs.join("\n");
-
-        output.textContent =
-          macs.join("\n");
-
-        statusBox.textContent =
-          "✓ MAC address detected successfully.";
-
-      }else{
-
-        output.textContent =
-          "No MAC address detected.";
-
-        statusBox.textContent =
-          "⚠ No MAC address found. Try a clearer close-up photo.";
-
-      }
-
-    }
-    catch(error){
-
-      console.error(error);
-
-      statusBox.textContent =
-        "⚠ OCR could not run. Please check your internet connection and try again.";
-
-    }
-
-  };
-
-  reader.readAsDataURL(file);
-}
-
-
-/* --------------------------------
-   FILE INPUTS
--------------------------------- */
-
-photo.addEventListener(
-  "change",
-  function(){
-    processImage(this.files[0]);
-  }
-);
-
-
-galleryInput.addEventListener(
-  "change",
-  function(){
-    processImage(this.files[0]);
-  }
-);
-
-
-cameraInput.addEventListener(
-  "change",
-  function(){
-    processImage(this.files[0]);
-  }
-);
-
-
-/* --------------------------------
-   MOBILE GALLERY
--------------------------------- */
-
-galleryBtn.addEventListener(
-  "click",
-  function(){
-
-    galleryInput.click();
-
-  }
-);
-
-
-/* --------------------------------
-   MOBILE CAMERA
--------------------------------- */
-
-cameraBtn.addEventListener(
-  "click",
-  function(){
-
-    cameraInput.click();
-
-  }
-);
-
-
-/* --------------------------------
-   FORMAT BUTTON
--------------------------------- */
-
-formatBtn.addEventListen
+    padding:14p
 ```
