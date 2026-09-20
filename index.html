@@ -1,27 +1,21 @@
-
-<!doctype html>
+```html
+<!DOCTYPE html>
 <html lang="en">
-
 <head>
-<meta charset="utf-8">
-
-<meta name="viewport"
-      content="width=device-width, initial-scale=1, viewport-fit=cover">
-
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#4f46e5">
 
 <title>MAC Address Formatter</title>
 
 <style>
-
 *{
   box-sizing:border-box;
-  -webkit-tap-highlight-color:transparent;
 }
 
 body{
   margin:0;
-  padding:20px 14px;
+  padding:20px 12px;
   font-family:Segoe UI,Arial,sans-serif;
   background:#f5f7fb;
   color:#172033;
@@ -35,20 +29,20 @@ main{
 
 .head{
   text-align:center;
-  padding:10px 0 18px;
+  margin-bottom:18px;
 }
 
 .logo{
-  margin:auto;
   width:64px;
   height:64px;
+  margin:auto;
   border-radius:18px;
   background:linear-gradient(135deg,#4f46e5,#7c3aed);
   color:white;
-  display:grid;
-  place-items:center;
+  display:flex;
+  align-items:center;
+  justify-content:center;
   font-size:30px;
-  box-shadow:0 8px 20px #4f46e533;
 }
 
 h1{
@@ -62,11 +56,11 @@ h1{
 }
 
 .card{
-  background:white;
+  background:#fff;
   padding:20px;
   margin:15px 0;
   border-radius:20px;
-  box-shadow:0 10px 30px #00000012;
+  box-shadow:0 10px 30px rgba(0,0,0,.07);
 }
 
 .title{
@@ -77,37 +71,30 @@ h1{
 
 textarea{
   width:100%;
-  min-height:130px;
-  resize:vertical;
+  height:130px;
   padding:14px;
   border:1px solid #ddd;
   border-radius:12px;
+  resize:vertical;
   font:15px Consolas,monospace;
   outline:none;
 }
 
-textarea:focus{
-  border-color:#6366f1;
-  box-shadow:0 0 0 3px #6366f122;
-}
-
 button,
-.file-button{
+.upload-label{
   width:100%;
+  min-height:48px;
   border:0;
   border-radius:12px;
-  padding:14px;
+  padding:13px;
   margin-top:12px;
-  font-weight:700;
   font-size:15px;
+  font-weight:700;
   cursor:pointer;
-  min-height:48px;
-  touch-action:manipulation;
-  text-align:center;
   display:flex;
   align-items:center;
   justify-content:center;
-  text-decoration:none;
+  text-align:center;
 }
 
 .primary{
@@ -116,11 +103,11 @@ button,
 }
 
 .secondary{
-  background:#eee;
+  background:#eeeeee;
   color:#333;
 }
 
-.file{
+.file-box{
   border:2px dashed #c7d2fe;
   padding:18px;
   text-align:center;
@@ -128,48 +115,51 @@ button,
   background:#fafaff;
 }
 
-.file small{
+.file-box small{
   display:block;
+  color:#697386;
   margin-top:7px;
   line-height:1.5;
-  color:#697386;
 }
 
-.file-main-input{
+.desktop-file{
   width:100%;
   margin-top:14px;
-  font-size:14px;
 }
 
-.mobile-buttons{
+.mobile-options{
   display:grid;
   grid-template-columns:1fr 1fr;
   gap:10px;
   margin-top:12px;
 }
 
-.mobile-buttons label{
+.mobile-options label{
   margin-top:0;
 }
 
 .mobile-input{
   position:absolute;
+  left:-9999px;
   width:1px;
   height:1px;
-  opacity:0;
-  pointer-events:none;
 }
 
 .preview{
-  width:100%;
-  max-width:100%;
-  max-height:320px;
-  object-fit:contain;
-  margin:15px auto 5px;
   display:none;
+  width:100%;
+  max-height:300px;
+  object-fit:contain;
+  margin:15px auto 0;
   border-radius:12px;
   border:1px solid #ddd;
-  background:#f5f5f5;
+}
+
+.status{
+  text-align:center;
+  color:#697386;
+  font-size:13px;
+  padding-top:10px;
 }
 
 .out{
@@ -183,26 +173,260 @@ button,
   overflow-wrap:anywhere;
 }
 
-.status{
-  text-align:center;
-  color:#697386;
-  font-size:13px;
-  padding:10px 5px 0;
-  line-height:1.5;
-}
-
 .grid{
   display:grid;
   grid-template-columns:1fr 1fr;
   gap:12px;
 }
 
-.grid button{
-  margin-top:12px;
-}
-
 @media(max-width:550px){
 
   body{
-    padding:14p
+    padding:14px 10px;
+  }
+
+  .card{
+    padding:16px;
+    border-radius:17px;
+  }
+
+  h1{
+    font-size:23px;
+  }
+
+  .mobile-options{
+    grid-template-columns:1fr;
+  }
+
+  .grid{
+    grid-template-columns:1fr;
+  }
+
+  button,
+  .upload-label{
+    font-size:16px;
+  }
+
+  textarea{
+    font-size:16px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<main>
+
+<div class="head">
+  <div class="logo">⌁</div>
+
+  <h1>MAC Address Formatter</h1>
+
+  <div class="sub">
+    Format, scan and copy MAC addresses
+  </div>
+</div>
+
+
+<!-- MANUAL -->
+
+<div class="card">
+
+  <div class="title">
+    ⌨ Manual Formatter
+  </div>
+
+  <textarea id="macInput"
+    placeholder="Enter MAC addresses, one per line...">68-3E-26-8D-BB-F7
+4C:23:38:42:01:33</textarea>
+
+  <button
+    type="button"
+    class="primary"
+    id="formatButton">
+
+    ⚡ Format MAC Addresses
+
+  </button>
+
+</div>
+
+
+<!-- PHOTO -->
+
+<div class="card">
+
+  <div class="title">
+    📷 Get MAC Address from Photo
+  </div>
+
+  <div class="file-box">
+
+    <b>📁 Import Photo</b>
+
+    <small>
+      Select an image from your computer, gallery or camera.
+    </small>
+
+
+    <!-- COMPUTER -->
+
+    <input
+      id="computerFile"
+      class="desktop-file"
+      type="file"
+      accept="image/*">
+
+
+    <!-- MOBILE -->
+
+    <div class="mobile-options">
+
+      <label
+        for="galleryFile"
+        class="upload-label secondary">
+
+        🖼️ Gallery
+
+      </label>
+
+
+      <label
+        for="cameraFile"
+        class="upload-label secondary">
+
+        📷 Camera
+
+      </label>
+
+    </div>
+
+
+    <input
+      id="galleryFile"
+      class="mobile-input"
+      type="file"
+      accept="image/*">
+
+
+    <input
+      id="cameraFile"
+      class="mobile-input"
+      type="file"
+      accept="image/*"
+      capture="environment">
+
+
+    <img
+      id="preview"
+      class="preview"
+      alt="Preview">
+
+  </div>
+
+
+  <div
+    id="status"
+    class="status">
+
+    Choose an image to scan.
+
+  </div>
+
+</div>
+
+
+<!-- RESULT -->
+
+<div class="card">
+
+  <div class="title">
+    ✓ Formatted Result
+  </div>
+
+  <div
+    id="result"
+    class="out">
+
+    Your formatted MAC address will appear here.
+
+  </div>
+
+
+  <div class="grid">
+
+    <button
+      type="button"
+      class="primary"
+      id="copyButton">
+
+      📋 Copy Result
+
+    </button>
+
+
+    <button
+      type="button"
+      class="secondary"
+      id="clearButton">
+
+      ↺ Clear
+
+    </button>
+
+  </div>
+
+</div>
+
+</main>
+
+
+<script>
+
+(function(){
+
+"use strict";
+
+
+/* ============================
+   ELEMENTS
+============================ */
+
+var macInput =
+  document.getElementById("macInput");
+
+var result =
+  document.getElementById("result");
+
+var computerFile =
+  document.getElementById("computerFile");
+
+var galleryFile =
+  document.getElementById("galleryFile");
+
+var cameraFile =
+  document.getElementById("cameraFile");
+
+var preview =
+  document.getElementById("preview");
+
+var status =
+  document.getElementById("status");
+
+var formatButton =
+  document.getElementById("formatButton");
+
+var copyButton =
+  document.getElementById("copyButton");
+
+var clearButton =
+  document.getElementById("clearButton");
+
+
+/* ============================
+   FORMAT MAC
+============================ */
+
+function formatOne(value)
 ```
